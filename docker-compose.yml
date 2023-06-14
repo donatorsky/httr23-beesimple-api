@@ -1,0 +1,12 @@
+version: '3'
+
+volumes:
+  redis_data: { }
+
+services:
+  redis:
+    image: redis:7.0.0-alpine3.16
+    volumes:
+      - redis_data:/data
+    ports:
+      - '${REDIS_PORT:-6379}:6379'

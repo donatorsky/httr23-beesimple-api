@@ -4,14 +4,15 @@ import { Chat, StatusEnum } from './entities/chat.entity';
 import { CreateChatDto } from './dto/create_chat.dto';
 import { MessageService } from './message.service';
 import { Message } from './entities/message.entity';
-import { OpenAIService } from './openai.service';
+import { InjectQueue } from '@nestjs/bull';
+import { Queue } from 'bull';
 
 @Controller('chats')
 export class ChatController {
   constructor(
     private readonly chatService: ChatService,
     private readonly messageService: MessageService,
-    private readonly openAIService: OpenAIService,
+    @InjectQueue('queue') private queue: Queue,
   ) {}
 
   @Get()
@@ -52,28 +53,16 @@ export class ChatController {
       } as Message)
       .then((message) => messages.push(message));
 
-    const interval = setInterval(() => console.log('Running...'), 1000);
-
-    this.openAIService
-      .chat(messages)
-      .then((result) =>
-        this.messageService.create({
-          chat: {
-            id: chat.id,
-          },
-          role: 'assistant',
-          type: 'message',
-          contents: result.data.choices[0].message.content,
-        } as Message),
-      )
-      .then(() =>
-        this.chatService.create({
-          status: StatusEnum.READY,
-          title: createChatDto.title,
-        } as Chat),
-      )
-      .then(() => clearInterval(interval))
-      .catch((reason) => console.error(reason));
+    await this.queue.add(
+      'openai',
+      {
+        chat_id: chat.id,
+        messages: messages,
+      },
+      {
+        removeOnComplete: true,
+      },
+    );
 
     return {
       id: chat.id,
