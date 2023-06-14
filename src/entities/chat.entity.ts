@@ -16,7 +16,7 @@ export class Chat {
   title: string;
 
   @Column()
-  status: string;
+  status: StatusEnum;
 
   @CreateDateColumn({ default: () => 'CURRENT_TIMESTAMP', precision: 6 })
   created_at: Date;
@@ -24,3 +24,10 @@ export class Chat {
   @OneToMany(() => Message, (message) => message.chat)
   messages: Message[];
 }
+
+export const StatusEnum = {
+  WAITING: 'WAITING',
+  READY: 'READY',
+} as const;
+
+export type StatusEnum = (typeof StatusEnum)[keyof typeof StatusEnum];

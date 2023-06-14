@@ -7,9 +7,12 @@ import { ChatService } from './chat.service';
 import { MessageService } from './message.service';
 import { Chat } from './entities/chat.entity';
 import { Message } from './entities/message.entity';
+import { OpenAIService } from './openai.service';
+import { ConfigModule } from '@nestjs/config';
 
 @Module({
   imports: [
+    ConfigModule.forRoot(),
     TypeOrmModule.forRoot({
       type: 'sqlite',
       database: 'database.sqlite',
@@ -17,11 +20,9 @@ import { Message } from './entities/message.entity';
       synchronize: true, // Set to true for development, but false for production
     }),
     TypeOrmModule.forFeature([Chat, Message]),
-    // MessageModule,
-    // ChatModule,
   ],
   controllers: [MessageController, ChatController],
-  providers: [MessageService, ChatService],
+  providers: [MessageService, ChatService, OpenAIService],
 })
 export class AppModule {
   configure(consumer: MiddlewareConsumer) {
