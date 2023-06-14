@@ -1,0 +1,29 @@
+### CORS: chats
+OPTIONS {{ host }}/chats
+
+### Get all chats
+GET {{ host }}/chats
+
+### Store chat
+POST {{ host }}/chats
+Content-Type: application/json
+
+{
+  "title": "Elo"
+}
+
+### Get chat by ID
+GET {{ host }}/chats/2
+
+### Get chat's all messages
+GET {{ host }}/chats/1/messages
+
+### Add chat's message
+POST {{ host }}/chats/1/messages
+Content-Type: application/json
+
+{
+  "role": "role",
+  "type": "type",
+  "contents": "contents"
+}
