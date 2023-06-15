@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Chat } from './entities/chat.entity';
 import { Repository } from 'typeorm';
 import { ChatCompletionRequestMessage, Configuration, OpenAIApi } from 'openai';
-import { Message } from './entities/message.entity';
+import { Message, MessageRoleEnum } from './entities/message.entity';
 import { ChatCompletionRequestMessageRoleEnum } from 'openai/api';
 
 @Injectable()
@@ -27,13 +27,13 @@ export class OpenAIService {
       messages: messages
         .filter((message) => {
           switch (message.role) {
-            case 'system':
+            case MessageRoleEnum.SYSTEM:
               return true;
 
-            case 'user':
+            case MessageRoleEnum.USER:
               return true;
 
-            case 'assistant':
+            case MessageRoleEnum.ASSISTANT:
               return true;
 
             default:

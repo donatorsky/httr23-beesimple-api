@@ -12,7 +12,7 @@ export class ChatService {
 
   async findAll(): Promise<Chat[]> {
     return this.chatRepository.find({
-      select: ['id', 'status', 'title'],
+      select: ['id', 'status', 'type', 'title', 'created_at'],
       order: {
         created_at: 'DESC',
       },

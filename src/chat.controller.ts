@@ -15,7 +15,11 @@ import { ChatService } from './chat.service';
 import { Chat, ChatStatusEnum, ChatTypeEnum } from './entities/chat.entity';
 import { CreateChatDto } from './dto/create_chat.dto';
 import { MessageService } from './message.service';
-import { Message } from './entities/message.entity';
+import {
+  Message,
+  MessageRoleEnum,
+  MessageTypeEnum,
+} from './entities/message.entity';
 import { InjectQueue } from '@nestjs/bull';
 import { Queue } from 'bull';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -113,23 +117,36 @@ export class ChatController {
         chat: {
           id: chat.id,
         },
-        role: 'system',
-        type: 'system',
+        role: MessageRoleEnum.SYSTEM,
+        type: MessageTypeEnum.SYSTEM,
         contents:
           'You’re a kind assistant and translator. You have 2 tasks: first translate input to English and then summarize input text into 2-5 sentences using plain English language using simple words which can be understood by a person with B1 level English',
       } as Message)
-      .then((message) => messages.push(message));
+      .then((message) =>
+        messages.push({
+          role: message.role,
+          contents: message.contents,
+        } as Message),
+      );
 
     await this.messageService
       .create({
         chat: {
           id: chat.id,
         },
-        role: 'user',
-        type: chat.type == ChatTypeEnum.TEXT ? 'message' : 'file',
+        role: MessageRoleEnum.USER,
+        type:
+          chat.type == ChatTypeEnum.TEXT
+            ? MessageTypeEnum.MESSAGE
+            : MessageTypeEnum.FILE,
         contents: createChatDto.title,
       } as Message)
-      .then((message) => messages.push(message));
+      .then((message) =>
+        messages.push({
+          role: message.role,
+          contents: message.contents,
+        } as Message),
+      );
 
     await this.queue.add(
       'openai',

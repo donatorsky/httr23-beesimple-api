@@ -2,7 +2,11 @@ import { Job } from 'bull';
 import { Process, Processor } from '@nestjs/bull';
 import { OpenAIService } from './openai.service';
 import { Chat, ChatStatusEnum } from './entities/chat.entity';
-import { Message } from './entities/message.entity';
+import {
+  Message,
+  MessageRoleEnum,
+  MessageTypeEnum,
+} from './entities/message.entity';
 import { ChatService } from './chat.service';
 import { MessageService } from './message.service';
 
@@ -23,8 +27,8 @@ export class QueueProcessor {
           chat: {
             id: job.data.chat_id,
           },
-          role: 'assistant',
-          type: 'message',
+          role: MessageRoleEnum.ASSISTANT,
+          type: MessageTypeEnum.MESSAGE,
           contents: result.data.choices[0].message.content,
         } as Message),
       )

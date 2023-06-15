@@ -18,10 +18,10 @@ export class Message {
   chat: Chat;
 
   @Column()
-  role: string;
+  role: MessageRoleEnum;
 
   @Column()
-  type: string;
+  type: MessageTypeEnum;
 
   @Column()
   contents: string;
@@ -29,3 +29,21 @@ export class Message {
   @CreateDateColumn({ default: () => 'CURRENT_TIMESTAMP', precision: 3 })
   created_at: Date;
 }
+
+export const MessageRoleEnum = {
+  ASSISTANT: 'assistant',
+  SYSTEM: 'system',
+  USER: 'user',
+} as const;
+
+export type MessageRoleEnum =
+  (typeof MessageRoleEnum)[keyof typeof MessageRoleEnum];
+
+export const MessageTypeEnum = {
+  SYSTEM: 'SYSTEM',
+  MESSAGE: 'MESSAGE',
+  FILE: 'FILE',
+} as const;
+
+export type MessageTypeEnum =
+  (typeof MessageTypeEnum)[keyof typeof MessageTypeEnum];
