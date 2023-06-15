@@ -21,6 +21,9 @@ export class Chat {
   @Column()
   type: ChatTypeEnum;
 
+  @Column()
+  language: string;
+
   @CreateDateColumn({ default: () => 'CURRENT_TIMESTAMP', precision: 6 })
   created_at: Date;
 

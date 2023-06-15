@@ -41,9 +41,11 @@ export class MessageController {
     @Param('chatId', ParseIntPipe) chatId: number,
     @Body() createMessageDto: CreateMessageDto,
   ) {
+    const chat = await this.chatService.getById(chatId);
+
     const newMessage = await this.messageService.create({
       chat: {
-        id: chatId,
+        id: chat.id,
       },
       role: MessageRoleEnum.USER,
       type: MessageTypeEnum.MESSAGE,
@@ -51,23 +53,29 @@ export class MessageController {
     } as Message);
 
     await this.chatService.create({
-      id: chatId,
+      id: chat.id,
       status: ChatStatusEnum.WAITING,
     } as Chat);
 
     await this.queue.add(
       'openai',
       {
-        chat_id: chatId,
+        chat_id: chat.id,
         messages: (
-          await this.messageService.findAll(chatId, false, 'ASC')
-        ).map(
-          (message) =>
-            ({
+          await this.messageService.findAll(chat.id, false, 'ASC')
+        ).map((message, idx) => {
+          if (idx > 1 && message.role === MessageRoleEnum.USER) {
+            return {
               role: message.role,
-              contents: message.contents,
-            } as Message),
-        ),
+              contents: `Please answer the question in very simple ${chat.language}, suitable for someone who only knows basic ${chat.language} (A2 level proficiency). Question: ${message.contents}.`,
+            };
+          }
+
+          return {
+            role: message.role,
+            contents: message.contents,
+          };
+        }),
       },
       {
         removeOnComplete: true,

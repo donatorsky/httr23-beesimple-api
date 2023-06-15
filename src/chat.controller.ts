@@ -46,6 +46,7 @@ export class ChatController {
       status: ChatStatusEnum.WAITING,
       type: ChatTypeEnum.TEXT,
       title: createChatDto.title.substring(0, 25),
+      language: createChatDto.language,
     } as Chat);
 
     await this.storeMessagesAndQueueOpenAI(chat, createChatDto);
@@ -61,6 +62,7 @@ export class ChatController {
   async fromFile(
     @Res() res: Response,
     @UploadedFile() file: Express.Multer.File,
+    @Body('language') language: string,
   ) {
     const doc = await pdfjslib.getDocument(file.buffer.buffer).promise;
 
@@ -90,10 +92,12 @@ export class ChatController {
       status: ChatStatusEnum.WAITING,
       type: ChatTypeEnum.PDF,
       title: file.originalname,
+      language: language,
     } as Chat);
 
     await this.storeMessagesAndQueueOpenAI(chat, {
       title: contents,
+      language: language,
     });
 
     return res.status(HttpStatus.CREATED).json({
@@ -119,8 +123,7 @@ export class ChatController {
         },
         role: MessageRoleEnum.SYSTEM,
         type: MessageTypeEnum.SYSTEM,
-        contents:
-          'You’re a kind assistant and translator. You have 2 tasks: first translate input to English and then summarize input text into 2-5 sentences using plain English language using simple words which can be understood by a person with B1 level English',
+        contents: `You’re a kind assistant and translator. You have 2 tasks: first translate input to ${chat.language} and explain the text in very simple ${chat.language}, suitable for someone who only knows basic ${chat.language} (A2 level proficiency) in maximum 100 words`,
       } as Message)
       .then((message) =>
         messages.push({

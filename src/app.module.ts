@@ -37,6 +37,6 @@ import { QueueProcessor } from './queue.processor';
 })
 export class AppModule {
   configure(consumer: MiddlewareConsumer) {
-    consumer.apply(DelayMiddleware).forRoutes('*');
+    //consumer.apply(DelayMiddleware).forRoutes('*');
   }
 }
