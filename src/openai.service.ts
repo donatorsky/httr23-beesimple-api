@@ -1,10 +1,10 @@
-import {Injectable} from '@nestjs/common';
-import {InjectRepository} from '@nestjs/typeorm';
-import {Chat} from './entities/chat.entity';
-import {Repository} from 'typeorm';
-import {ChatCompletionRequestMessage, Configuration, OpenAIApi} from 'openai';
-import {Message} from './entities/message.entity';
-import {ChatCompletionRequestMessageRoleEnum} from 'openai/api';
+import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Chat } from './entities/chat.entity';
+import { Repository } from 'typeorm';
+import { ChatCompletionRequestMessage, Configuration, OpenAIApi } from 'openai';
+import { Message } from './entities/message.entity';
+import { ChatCompletionRequestMessageRoleEnum } from 'openai/api';
 
 @Injectable()
 export class OpenAIService {

@@ -16,7 +16,10 @@ export class Chat {
   title: string;
 
   @Column()
-  status: StatusEnum;
+  status: ChatStatusEnum;
+
+  @Column()
+  type: ChatTypeEnum;
 
   @CreateDateColumn({ default: () => 'CURRENT_TIMESTAMP', precision: 6 })
   created_at: Date;
@@ -25,9 +28,17 @@ export class Chat {
   messages: Message[];
 }
 
-export const StatusEnum = {
+export const ChatStatusEnum = {
   WAITING: 'WAITING',
   READY: 'READY',
 } as const;
 
-export type StatusEnum = (typeof StatusEnum)[keyof typeof StatusEnum];
+export type ChatStatusEnum =
+  (typeof ChatStatusEnum)[keyof typeof ChatStatusEnum];
+
+export const ChatTypeEnum = {
+  TEXT: 'TEXT',
+  PDF: 'PDF',
+} as const;
+
+export type ChatTypeEnum = (typeof ChatTypeEnum)[keyof typeof ChatTypeEnum];

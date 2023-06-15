@@ -1,11 +1,26 @@
-import { Body, Controller, Get, HttpCode, Param, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  ParseIntPipe,
+  Post,
+  Res,
+  UploadedFile,
+  UseInterceptors,
+} from '@nestjs/common';
 import { ChatService } from './chat.service';
-import { Chat, StatusEnum } from './entities/chat.entity';
+import { Chat, ChatStatusEnum, ChatTypeEnum } from './entities/chat.entity';
 import { CreateChatDto } from './dto/create_chat.dto';
 import { MessageService } from './message.service';
 import { Message } from './entities/message.entity';
 import { InjectQueue } from '@nestjs/bull';
 import { Queue } from 'bull';
+import { FileInterceptor } from '@nestjs/platform-express';
+import * as pdfjslib from 'pdfjs-dist';
+import { Response } from 'express';
 
 @Controller('chats')
 export class ChatController {
@@ -21,13 +36,76 @@ export class ChatController {
   }
 
   @Post()
-  @HttpCode(201)
-  async store(@Body() createChatDto: CreateChatDto) {
+  @HttpCode(HttpStatus.CREATED)
+  async fromText(@Body() createChatDto: CreateChatDto) {
     const chat = await this.chatService.create({
-      status: StatusEnum.WAITING,
+      status: ChatStatusEnum.WAITING,
+      type: ChatTypeEnum.TEXT,
       title: createChatDto.title.substring(0, 25),
     } as Chat);
 
+    await this.storeMessagesAndQueueOpenAI(chat, createChatDto);
+
+    return {
+      id: chat.id,
+    };
+  }
+
+  @Post('file')
+  @HttpCode(HttpStatus.CREATED)
+  @UseInterceptors(FileInterceptor('file'))
+  async fromFile(
+    @Res() res: Response,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    const doc = await pdfjslib.getDocument(file.buffer.buffer).promise;
+
+    const pagesContents: string[] = [];
+
+    for (let pageNum = 1; pageNum <= doc.numPages; pageNum++) {
+      await doc
+        .getPage(pageNum)
+        .then((page) => page.getTextContent())
+        .then((tokens) =>
+          tokens.items.map((token: any) => token.str.trim()).join(' '),
+        )
+        .then((text) => pagesContents.push(text));
+    }
+
+    const contents = pagesContents.join(' ').trim();
+
+    if (contents === '') {
+      res.status(HttpStatus.UNPROCESSABLE_ENTITY).json({
+        error: 'File does not contain any text',
+      });
+
+      return;
+    }
+
+    const chat = await this.chatService.create({
+      status: ChatStatusEnum.WAITING,
+      type: ChatTypeEnum.PDF,
+      title: file.originalname,
+    } as Chat);
+
+    await this.storeMessagesAndQueueOpenAI(chat, {
+      title: contents,
+    });
+
+    return res.status(HttpStatus.CREATED).json({
+      id: chat.id,
+    });
+  }
+
+  @Get(':id')
+  async getById(@Param('id', ParseIntPipe) id: number): Promise<Chat> {
+    return this.chatService.getById(id);
+  }
+
+  private async storeMessagesAndQueueOpenAI(
+    chat: Chat,
+    createChatDto: CreateChatDto,
+  ) {
     const messages: Message[] = [];
 
     await this.messageService
@@ -48,7 +126,7 @@ export class ChatController {
           id: chat.id,
         },
         role: 'user',
-        type: 'message',
+        type: chat.type == ChatTypeEnum.TEXT ? 'message' : 'file',
         contents: createChatDto.title,
       } as Message)
       .then((message) => messages.push(message));
@@ -63,14 +141,5 @@ export class ChatController {
         removeOnComplete: true,
       },
     );
-
-    return {
-      id: chat.id,
-    };
-  }
-
-  @Get(':id')
-  async getById(@Param('id') id: number): Promise<Chat> {
-    return this.chatService.getById(id);
   }
 }

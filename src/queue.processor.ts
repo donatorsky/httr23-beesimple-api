@@ -1,7 +1,7 @@
 import { Job } from 'bull';
 import { Process, Processor } from '@nestjs/bull';
 import { OpenAIService } from './openai.service';
-import { Chat, StatusEnum } from './entities/chat.entity';
+import { Chat, ChatStatusEnum } from './entities/chat.entity';
 import { Message } from './entities/message.entity';
 import { ChatService } from './chat.service';
 import { MessageService } from './message.service';
@@ -31,7 +31,7 @@ export class QueueProcessor {
       .then(() =>
         this.chatService.create({
           id: job.data.chat_id,
-          status: StatusEnum.READY,
+          status: ChatStatusEnum.READY,
         } as Chat),
       )
       .catch((reason) => console.error(reason));
